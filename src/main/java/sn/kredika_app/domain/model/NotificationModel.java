@@ -15,6 +15,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import sn.kredika_app.domain.dto.persistence.NotificationDataPersistenceDto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -106,7 +107,7 @@ public class NotificationModel extends BaseModel {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "data", columnDefinition = "jsonb")
-    private Object data;
+    private NotificationDataPersistenceDto data;
 
     /**
      * Date/heure d'envoi de la notification
@@ -235,11 +236,11 @@ public class NotificationModel extends BaseModel {
         this.actionUrl = actionUrl;
     }
 
-    public Object getData () {
+    public NotificationDataPersistenceDto getData () {
         return data;
     }
 
-    public void setData (Object data) {
+    public void setData (NotificationDataPersistenceDto data) {
         this.data = data;
     }
 

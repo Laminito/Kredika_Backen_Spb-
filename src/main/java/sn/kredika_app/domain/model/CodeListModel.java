@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import sn.kredika_app.domain.dto.persistence.MetadataPersistenceDto;
 
 
 /**
@@ -94,7 +95,7 @@ public class CodeListModel extends BaseModel {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "metadata", columnDefinition = "jsonb")
-    private Object metadata;
+    private MetadataPersistenceDto metadata;
 
     /**
      * Vérifie si le code est inactif
@@ -170,11 +171,11 @@ public class CodeListModel extends BaseModel {
         this.position = position;
     }
 
-    public Object getMetadata () {
+    public MetadataPersistenceDto getMetadata () {
         return metadata;
     }
 
-    public void setMetadata (Object metadata) {
+    public void setMetadata (MetadataPersistenceDto metadata) {
         this.metadata = metadata;
     }
 }

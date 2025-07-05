@@ -17,6 +17,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import sn.kredika_app.domain.dto.persistence.DeviceInfoPersistenceDto;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,7 +54,7 @@ public class UserSessionModel extends BaseModel {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "device_info", columnDefinition = "jsonb")
-    private Object deviceInfo;
+    private DeviceInfoPersistenceDto deviceInfo;
 
     /**
      * Adresse IP de l'utilisateur lors de la création de la session.
@@ -208,10 +209,13 @@ public class UserSessionModel extends BaseModel {
         this.sessionToken = sessionToken;
     }
 
-    public void setDeviceInfo (String deviceInfo) {
+    public void setDeviceInfo (DeviceInfoPersistenceDto deviceInfo) {
         this.deviceInfo = deviceInfo;
     }
 
+    public DeviceInfoPersistenceDto getDeviceInfo () {
+        return deviceInfo;
+    }
     public String getIpAddress () {
         return ipAddress;
     }

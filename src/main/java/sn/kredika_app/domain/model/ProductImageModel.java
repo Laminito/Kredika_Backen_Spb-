@@ -121,4 +121,13 @@ public class ProductImageModel extends BaseModel {
         this.imageUrl = imageUrl;
     }
 
+    public @Min(value = 0, message = "La position ne peut être négative") Integer getPosition () {
+        return position;
+    }
+
+    public void setPosition (@Min(value = 0, message = "La position ne peut être négative") Integer position) {
+        this.position = position;
+    }
+
+
 }

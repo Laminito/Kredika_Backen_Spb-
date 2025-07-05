@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import sn.kredika_app.domain.dto.persistence.UserPreferencesPersistenceDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -167,7 +168,7 @@ public class UserModel extends BaseModel {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "preferences", columnDefinition = "jsonb")
-    private Object preferences;
+    private UserPreferencesPersistenceDto preferences;
 
     /**
      * Commandes passées par cet utilisateur. Relation OneToMany chargée en mode LAZY.
@@ -384,7 +385,7 @@ public class UserModel extends BaseModel {
     /**
      * Trouve les adresses dans un rayon donné (en km).
      */
-    public List<UserAddressModel> findAddressesNearby (double lat, double lng, double radiusKm) {
+    public List<UserAddressModel> findAddressesNearby (BigDecimal lat, BigDecimal lng, double radiusKm) {
         return addresses.stream()
                 .filter(addr -> addr.calculateDistanceTo(
                         new UserAddressModel() {{
@@ -531,11 +532,11 @@ public class UserModel extends BaseModel {
         this.roles = roles;
     }
 
-    public Object getPreferences () {
+    public UserPreferencesPersistenceDto getPreferences () {
         return preferences;
     }
 
-    public void setPreferences (Object preferences) {
+    public void setPreferences (UserPreferencesPersistenceDto preferences) {
         this.preferences = preferences;
     }
 

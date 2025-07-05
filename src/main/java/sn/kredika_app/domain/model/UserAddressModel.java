@@ -1,6 +1,8 @@
 package sn.kredika_app.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -16,6 +18,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -105,18 +108,22 @@ public class UserAddressModel extends BaseModel {
     @DecimalMin(value = "-90.0", message = "La latitude doit être >= -90")
     @DecimalMax(value = "90.0", message = "La latitude doit être <= 90")
     @Column(name = "latitude", precision = 9, scale = 6)
-    private Double latitude;
+    private BigDecimal latitude;
 
     @DecimalMin(value = "-180.0", message = "La longitude doit être >= -180")
     @DecimalMax(value = "180.0", message = "La longitude doit être <= 180")
     @Column(name = "longitude", precision = 9, scale = 6)
-    private Double longitude;
+    private BigDecimal longitude;
 
 
     /**
      * Convertit l'adresse en coordonnées GPS via une API (ex: OpenStreetMap Nominatim).
      */
     public void geocodeAddress () throws IOException, InterruptedException {
+        if (this.street == null || this.city == null || this.country == null) {
+            throw new IllegalStateException("Address fields must not be null");
+        }
+
         String fullAddress = String.format("%s, %s, %s", street, city, country);
         String url = "https://nominatim.openstreetmap.org/search?format=json&q="
                 + URLEncoder.encode(fullAddress, StandardCharsets.UTF_8);
@@ -129,27 +136,44 @@ public class UserAddressModel extends BaseModel {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() == 200 && response.body().length() > 2) {
-            String lat = response.body().split("\"lat\":\"")[1].split("\"")[0];
-            String lon = response.body().split("\"lon\":\"")[1].split("\"")[0];
-            this.latitude = Double.parseDouble(lat);
-            this.longitude = Double.parseDouble(lon);
+        if (response.statusCode() == 200 && !response.body().isBlank()) {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode[] results = mapper.readValue(response.body(), JsonNode[].class);
+
+            if (results.length > 0) {
+                JsonNode firstResult = results[0];
+                this.latitude = new BigDecimal(firstResult.get("lat").asText());
+                this.longitude = new BigDecimal(firstResult.get("lon").asText());
+            }
+        } else {
+            throw new IOException("Geocoding failed with status: " + response.statusCode());
         }
     }
 
     /**
      * Calcule la distance en km entre cette adresse et une autre.
+     * Retourne -1 si les coordonnées ne sont pas disponibles.
      */
     public double calculateDistanceTo (UserAddressModel other) {
-        if (this.latitude == null || other.latitude == null) return -1;
+        if (this.latitude == null || this.longitude == null ||
+                other.latitude == null || other.longitude == null) {
+            return -1;
+        }
 
         double earthRadius = 6371; // Rayon de la Terre en km
-        double dLat = Math.toRadians(other.latitude - this.latitude);
-        double dLng = Math.toRadians(other.longitude - this.longitude);
+
+        // Convert BigDecimal to double
+        double thisLat = this.latitude.doubleValue();
+        double thisLng = this.longitude.doubleValue();
+        double otherLat = other.latitude.doubleValue();
+        double otherLng = other.longitude.doubleValue();
+
+        double dLat = Math.toRadians(otherLat - thisLat);
+        double dLng = Math.toRadians(otherLng - thisLng);
 
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(this.latitude))
-                * Math.cos(Math.toRadians(other.latitude))
+                + Math.cos(Math.toRadians(thisLat))
+                * Math.cos(Math.toRadians(otherLat))
                 * Math.sin(dLng / 2) * Math.sin(dLng / 2);
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -330,19 +354,19 @@ public class UserAddressModel extends BaseModel {
         this.user = user;
     }
 
-    public @DecimalMin(value = "-90.0", message = "La latitude doit être >= -90") @DecimalMax(value = "90.0", message = "La latitude doit être <= 90") Double getLatitude () {
+    public @DecimalMin(value = "-90.0", message = "La latitude doit être >= -90") @DecimalMax(value = "90.0", message = "La latitude doit être <= 90") BigDecimal getLatitude () {
         return latitude;
     }
 
-    public void setLatitude (@DecimalMin(value = "-90.0", message = "La latitude doit être >= -90") @DecimalMax(value = "90.0", message = "La latitude doit être <= 90") Double latitude) {
+    public void setLatitude (@DecimalMin(value = "-90.0", message = "La latitude doit être >= -90") @DecimalMax(value = "90.0", message = "La latitude doit être <= 90") BigDecimal latitude) {
         this.latitude = latitude;
     }
 
-    public @DecimalMin(value = "-180.0", message = "La longitude doit être >= -180") @DecimalMax(value = "180.0", message = "La longitude doit être <= 180") Double getLongitude () {
+    public @DecimalMin(value = "-180.0", message = "La longitude doit être >= -180") @DecimalMax(value = "180.0", message = "La longitude doit être <= 180") BigDecimal getLongitude () {
         return longitude;
     }
 
-    public void setLongitude (@DecimalMin(value = "-180.0", message = "La longitude doit être >= -180") @DecimalMax(value = "180.0", message = "La longitude doit être <= 180") Double longitude) {
+    public void setLongitude (@DecimalMin(value = "-180.0", message = "La longitude doit être >= -180") @DecimalMax(value = "180.0", message = "La longitude doit être <= 180") BigDecimal longitude) {
         this.longitude = longitude;
     }
 }

@@ -20,6 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import sn.kredika_app.domain.dto.persistence.DimensionsPersistenceDto;
+import sn.kredika_app.domain.dto.persistence.ProductDataPersistenceDto;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -133,7 +135,7 @@ public class ProductModel extends BaseModel {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dimensions", columnDefinition = "jsonb")
-    private Object dimensions;
+    private DimensionsPersistenceDto dimensions;
 
     /**
      * Identifiant de la catégorie du produit.
@@ -258,7 +260,7 @@ public class ProductModel extends BaseModel {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "attributes", columnDefinition = "jsonb")
-    private Object attributes;
+    private ProductDataPersistenceDto attributes;
 
     /**
      * Titre SEO personnalisé.
@@ -342,10 +344,6 @@ public class ProductModel extends BaseModel {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<WishlistModel> wishlists = new ArrayList<>();
-
-    // ======================
-    // Méthodes utilitaires
-    // ======================
 
     /**
      * Vérifie si le produit est en stock.
@@ -577,11 +575,11 @@ public class ProductModel extends BaseModel {
         this.weight = weight;
     }
 
-    public Object getDimensions () {
+    public DimensionsPersistenceDto getDimensions () {
         return dimensions;
     }
 
-    public void setDimensions (Object dimensions) {
+    public void setDimensions (DimensionsPersistenceDto dimensions) {
         this.dimensions = dimensions;
     }
 
@@ -713,11 +711,11 @@ public class ProductModel extends BaseModel {
         this.tags = tags;
     }
 
-    public Object getAttributes () {
+    public ProductDataPersistenceDto getAttributes () {
         return attributes;
     }
 
-    public void setAttributes (Object attributes) {
+    public void setAttributes (ProductDataPersistenceDto attributes) {
         this.attributes = attributes;
     }
 

@@ -18,6 +18,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import sn.kredika_app.domain.dto.response.GatewayResponseDto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -90,7 +91,7 @@ public class PaymentTransactionModel extends BaseModel {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "gateway_response", columnDefinition = "jsonb")
-    private Object gatewayResponse;
+    private GatewayResponseDto gatewayResponse;
 
     /**
      * Statut courant de la transaction (PENDING, SUCCESS, FAILED, REFUNDED)
@@ -165,7 +166,7 @@ public class PaymentTransactionModel extends BaseModel {
      * @param externalId Identifiant externe de la transaction
      * @param response   Réponse de la passerelle de paiement
      */
-    public void markAsSuccessful (String externalId, Object response) {
+    public void markAsSuccessful (String externalId, GatewayResponseDto response) {
         this.statusCode = "SUCCESS";
         this.externalTransactionId = externalId;
         this.gatewayResponse = response;
@@ -265,11 +266,11 @@ public class PaymentTransactionModel extends BaseModel {
         this.externalTransactionId = externalTransactionId;
     }
 
-    public Object getGatewayResponse () {
+    public GatewayResponseDto getGatewayResponse () {
         return gatewayResponse;
     }
 
-    public void setGatewayResponse (Object gatewayResponse) {
+    public void setGatewayResponse (GatewayResponseDto gatewayResponse) {
         this.gatewayResponse = gatewayResponse;
     }
 
