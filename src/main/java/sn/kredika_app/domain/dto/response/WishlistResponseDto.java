@@ -7,25 +7,21 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * DTO représentant la liste complète de souhaits d'un utilisateur
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserResponseDto {
-    private UUID id;
-    private String fullName;
-    private String email;
-    private String phoneNumber;
-    private Integer age;
-    private String profileImageUrl;
-    private String statusCode;
-    private LocalDateTime createdAt;
-    private String keycloakId;
-    private List<UserAddressResponseDto> addresses;
+public class WishlistResponseDto {
+    private UUID userId;
+    private String userName;
+    private List<WishlistItemResponseDto> items;
+    private int totalItems;
 }

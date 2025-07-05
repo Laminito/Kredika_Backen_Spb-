@@ -1,6 +1,8 @@
 package sn.kredika_app.domain.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
@@ -11,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.validator.constraints.URL;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,14 +33,22 @@ public class UserRequestDto {
     @Email
     private String email;
 
-    @Pattern(regexp = "^[+]?[\\d\\s-()]+$")
+    @Pattern(regexp = "^\\+(?:[0-9] ?){6,14}[0-9]$")
     private String phoneNumber;
 
     @Past
     private LocalDate dateOfBirth;
 
+    @Size(min = 5, max = 50)
     private String nationalId;
+
+    @Size(max = 100)
     private String profession;
+
+    @DecimalMin("0.0")
+    @Digits(integer = 10, fraction = 2)
     private BigDecimal monthlyIncome;
+
+    @URL
     private String profileImageUrl;
 }

@@ -66,16 +66,14 @@ public class UserModel extends BaseModel {
     private String email;
 
     /**
-     * Numéro de téléphone de l'utilisateur.
-     * Doit respecter le format international.
+     * Numéro de téléphone de l'utilisateur. Doit respecter le format international.
      */
     @Pattern(regexp = "^\\+(?:[0-9] ?){6,14}[0-9]$", message = "Format de téléphone international invalide (ex: +33 6 12 34 56 78)")
     @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
     /**
-     * Date de naissance de l'utilisateur.
-     * Doit être dans le passé.
+     * Date de naissance de l'utilisateur. Doit être dans le passé.
      */
     @Past(message = "La date de naissance doit être dans le passé")
     @Column(name = "date_of_birth")
@@ -89,16 +87,14 @@ public class UserModel extends BaseModel {
     private String nationalId;
 
     /**
-     * Profession de l'utilisateur.
-     * Limitée à 100 caractères maximum.
+     * Profession de l'utilisateur. Limitée à 100 caractères maximum.
      */
     @Size(max = 100, message = "La profession ne peut excéder 100 caractères")
     @Column(name = "profession")
     private String profession;
 
     /**
-     * Revenu mensuel de l'utilisateur.
-     * Doit être positif si renseigné.
+     * Revenu mensuel de l'utilisateur. Doit être positif si renseigné.
      */
     @DecimalMin(value = "0.0", inclusive = false, message = "Le revenu mensuel doit être positif")
     @Digits(integer = 10, fraction = 2, message = "Format de revenu invalide")
@@ -106,29 +102,25 @@ public class UserModel extends BaseModel {
     private BigDecimal monthlyIncome;
 
     /**
-     * Code du rôle principal de l'utilisateur.
-     * Par défaut à "CUSTOMER".
+     * Code du rôle principal de l'utilisateur. Par défaut à "CUSTOMER".
      */
     @Column(name = "role_code")
     private String roleCode = "CUSTOMER";
 
     /**
-     * Indique si le compte utilisateur est vérifié.
-     * Par défaut à false.
+     * Indique si le compte utilisateur est vérifié. Par défaut à false.
      */
     @Column(name = "is_verified")
     private Boolean isVerified = false;
 
     /**
-     * Indique si l'email a été vérifié.
-     * Par défaut à false.
+     * Indique si l'email a été vérifié. Par défaut à false.
      */
     @Column(name = "email_verified")
     private Boolean emailVerified = false;
 
     /**
-     * Indique si le téléphone a été vérifié.
-     * Par défaut à false.
+     * Indique si le téléphone a été vérifié. Par défaut à false.
      */
     @Column(name = "phone_verified")
     private Boolean phoneVerified = false;
@@ -140,8 +132,7 @@ public class UserModel extends BaseModel {
     private String keycloakId;
 
     /**
-     * Statut du compte utilisateur (ACTIVE, SUSPENDED, etc.).
-     * Par défaut à "ACTIVE".
+     * Statut du compte utilisateur (ACTIVE, SUSPENDED, etc.). Par défaut à "ACTIVE".
      */
     @Column(name = "status_code")
     private String statusCode = "ACTIVE";
@@ -153,8 +144,7 @@ public class UserModel extends BaseModel {
     private String profileImageUrl;
 
     /**
-     * Langue préférée de l'utilisateur.
-     * Par défaut à "fr".
+     * Langue préférée de l'utilisateur. Par défaut à "fr".
      */
     @Column(name = "preferred_language", length = 2)
     private String preferredLanguage = "fr";
@@ -166,80 +156,70 @@ public class UserModel extends BaseModel {
     private LocalDateTime lastLoginAt;
 
     /**
-     * Liste des rôles de l'utilisateur.
-     * Stockée sous forme JSON dans la base de données.
+     * Liste des rôles de l'utilisateur. Stockée sous forme JSON dans la base de données.
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "roles", columnDefinition = "jsonb")
     private List<String> roles = new ArrayList<>();
 
     /**
-     * Préférences utilisateur personnalisées.
-     * Stockées sous forme JSON dans la base de données.
+     * Préférences utilisateur personnalisées. Stockées sous forme JSON dans la base de données.
      */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "preferences", columnDefinition = "jsonb")
     private Object preferences;
 
     /**
-     * Commandes passées par cet utilisateur.
-     * Relation OneToMany chargée en mode LAZY.
+     * Commandes passées par cet utilisateur. Relation OneToMany chargée en mode LAZY.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<OrderModel> orders = new ArrayList<>();
 
     /**
-     * Profil de crédit associé à cet utilisateur.
-     * Relation OneToOne chargée en mode LAZY.
+     * Profil de crédit associé à cet utilisateur. Relation OneToOne chargée en mode LAZY.
      */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private CreditProfileModel creditProfile;
 
     /**
-     * Adresses de cet utilisateur.
-     * Relation OneToMany chargée en mode LAZY.
+     * Adresses de cet utilisateur. Relation OneToMany chargée en mode LAZY.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<UserAddressModel> addresses = new ArrayList<>();
 
     /**
-     * Paniers de cet utilisateur.
-     * Relation OneToMany chargée en mode LAZY.
+     * Paniers de cet utilisateur. Relation OneToMany chargée en mode LAZY.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<CartModel> carts = new ArrayList<>();
 
     /**
-     * Plans de paiement associés à cet utilisateur.
-     * Relation OneToMany chargée en mode LAZY.
+     * Plans de paiement associés à cet utilisateur. Relation OneToMany chargée en mode LAZY.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<InstallmentPlanModel> installmentPlans = new ArrayList<>();
 
     /**
-     * Transactions de paiement de cet utilisateur.
-     * Relation OneToMany chargée en mode LAZY.
+     * Transactions de paiement de cet utilisateur. Relation OneToMany chargée en mode LAZY.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<PaymentTransactionModel> paymentTransactions = new ArrayList<>();
 
     /**
-     * Sessions de cet utilisateur.
-     * Relation OneToMany chargée en mode LAZY.
+     * Sessions de cet utilisateur. Relation OneToMany chargée en mode LAZY.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<UserSessionModel> userSessions = new ArrayList<>();
 
     /**
-     * Notifications reçues par cet utilisateur.
-     * Relation OneToMany chargée en mode LAZY.
+     * Notifications reçues par cet utilisateur. Relation OneToMany chargée en mode LAZY.
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
@@ -247,6 +227,7 @@ public class UserModel extends BaseModel {
 
     /**
      * Calcule l'âge de l'utilisateur en années.
+     *
      * @return l'âge en années ou null si la date de naissance n'est pas renseignée
      */
     public Integer getAge () {
@@ -266,6 +247,7 @@ public class UserModel extends BaseModel {
 
     /**
      * Vérifie si l'utilisateur est complètement vérifié (email et téléphone).
+     *
      * @return true si l'utilisateur est vérifié, false sinon
      */
     public Boolean isFullyVerified () {
@@ -274,6 +256,7 @@ public class UserModel extends BaseModel {
 
     /**
      * Récupère l'adresse par défaut de l'utilisateur.
+     *
      * @return l'adresse par défaut ou null si aucune n'est définie
      */
     public UserAddressModel getDefaultAddress () {
@@ -286,6 +269,7 @@ public class UserModel extends BaseModel {
 
     /**
      * Génère un nom d'affichage pour l'utilisateur.
+     *
      * @return le nom complet si disponible, sinon la partie avant @ de l'email
      */
     public String getDisplayName () {
@@ -386,6 +370,30 @@ public class UserModel extends BaseModel {
         return Arrays.stream(domains).noneMatch(d -> d.equalsIgnoreCase(domain));
     }
 
+    /**
+     * Récupère l'adresse par défaut avec coordonnées GPS.
+     */
+    public UserAddressModel getDefaultAddressWithCoords () {
+        return addresses.stream()
+                .filter(addr -> Boolean.TRUE.equals(addr.getDefault()))
+                .filter(addr -> addr.getLatitude() != null) // Uniquement si géolocalisée
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Trouve les adresses dans un rayon donné (en km).
+     */
+    public List<UserAddressModel> findAddressesNearby (double lat, double lng, double radiusKm) {
+        return addresses.stream()
+                .filter(addr -> addr.calculateDistanceTo(
+                        new UserAddressModel() {{
+                            setLatitude(lat);
+                            setLongitude(lng);
+                        }}
+                ) <= radiusKm)
+                .toList();
+    }
 
     public @NotBlank(message = "Le nom complet est requis") @Size(min = 2, max = 100, message = "Le nom doit contenir entre 2 et 100 caractères") String getFullName () {
         return fullName;
