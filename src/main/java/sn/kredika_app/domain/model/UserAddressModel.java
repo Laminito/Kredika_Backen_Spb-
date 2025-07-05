@@ -7,51 +7,199 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Modèle représentant une adresse utilisateur dans le système.
+ */
 @Entity
 @Table(name = "user_addresses", schema = "kredika_app")
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class UserAddressModel extends BaseModel {
 
-    @Column(name = "user_id")
+    /**
+     * Identifiant de l'utilisateur associé à cette adresse. Ce champ est obligatoire.
+     */
+    @NotNull(message = "L'utilisateur est requis")
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "type_code")
+    /**
+     * Type d'adresse (MAISON, TRAVAIL, etc.).
+     * Utilise un code prédéfini dans le système.
+     */
+    @NotBlank(message = "Le type d'adresse est requis")
+    @Size(max = 20, message = "Le type d'adresse ne peut excéder 20 caractères")
+    @Column(name = "type_code", nullable = false, length = 20)
     private String typeCode;
 
-    @Column(name = "street")
+    /**
+     * Rue et numéro de l'adresse.
+     * Ce champ est obligatoire.
+     */
+    @NotBlank(message = "La rue est requise")
+    @Size(max = 255, message = "La rue ne peut excéder 255 caractères")
+    @Column(name = "street", nullable = false)
     private String street;
 
-    @Column(name = "city")
+    /**
+     * Ville de l'adresse.
+     * Ce champ est obligatoire.
+     */
+    @NotBlank(message = "La ville est requise")
+    @Size(max = 100, message = "La ville ne peut excéder 100 caractères")
+    @Column(name = "city", nullable = false)
     private String city;
 
+    /**
+     * Région/État/Province de l'adresse.
+     */
+    @Size(max = 100, message = "La région ne peut excéder 100 caractères")
     @Column(name = "region")
     private String region;
 
-    @Column(name = "postal_code")
+    /**
+     * Code postal de l'adresse.
+     * Ce champ est obligatoire.
+     */
+    @NotBlank(message = "Le code postal est requis")
+    @Size(max = 20, message = "Le code postal ne peut excéder 20 caractères")
+    @Column(name = "postal_code", nullable = false)
     private String postalCode;
 
-    @Column(name = "country")
+    /**
+     * Pays de l'adresse.
+     * Ce champ est obligatoire.
+     * Doit utiliser un code pays ISO standard.
+     */
+    @NotBlank(message = "Le pays est requis")
+    @Size(min = 2, max = 2, message = "Le code pays doit avoir 2 caractères (ISO code)")
+    @Column(name = "country", nullable = false, length = 2)
     private String country;
 
+    /**
+     * Indique si c'est l'adresse par défaut de l'utilisateur.
+     * Par défaut à false.
+     */
     @Column(name = "is_default")
     private Boolean isDefault = false;
 
+    /**
+     * Utilisateur associé à cette adresse.
+     * Relation ManyToOne chargée en mode LAZY.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     @JsonIgnore
     private UserModel user;
 
-    // Méthode utilitaire pour la représentation texte
+    /**
+     * Retourne l'adresse complète formatée.
+     * @return la chaîne formatée contenant l'adresse complète
+     */
     public String getFullAddress () {
-        return String.format("%s, %s, %s, %s %s, %s",
-                street, city, region, postalCode, country
-        );
+        return String.format(
+                "%s, %s%s, %s %s, %s",
+                street,
+                city,
+                (region != null && !region.isEmpty()) ? ", " + region : "",
+                postalCode,
+                country
+        ).replaceAll(", , ", ", "); // Nettoyage des éléments vides
+    }
+
+    /**
+     * Définit cette adresse comme adresse par défaut. Désactive les autres adresses par défaut si nécessaire (à gérer
+     * au niveau service).
+     */
+    public void setAsDefault () {
+        this.isDefault = true;
+    }
+
+    /**
+     * Vérifie si l'adresse est valide (contient tous les champs obligatoires).
+     *
+     * @return true si l'adresse est valide, false sinon
+     */
+    public boolean isValid () {
+        return userId != null &&
+                typeCode != null && !typeCode.isEmpty() &&
+                street != null && !street.isEmpty() &&
+                city != null && !city.isEmpty() &&
+                postalCode != null && !postalCode.isEmpty() &&
+                country != null && country.length() == 2;
+    }
+
+    /**
+     * Compare cette adresse avec une autre pour détecter si elles sont similaires.
+     *
+     * @param other l'autre adresse à comparer
+     * @return true si les adresses sont similaires, false sinon
+     */
+    public boolean isSimilarTo (UserAddressModel other) {
+        if (other == null) return false;
+
+        return Objects.equals(this.street, other.street) &&
+                Objects.equals(this.city, other.city) &&
+                Objects.equals(this.region, other.region) &&
+                Objects.equals(this.postalCode, other.postalCode) &&
+                Objects.equals(this.country, other.country);
+    }
+
+    /**
+     * Retourne une version abrégée de l'adresse (ville et pays).
+     *
+     * @return la chaîne formatée contenant la ville et le pays
+     */
+    public String getShortAddress () {
+        return String.format("%s, %s", city, country);
+    }
+
+    /**
+     * Retourne le nom du type d'adresse formaté.
+     *
+     * @return le type formaté (ex: "Maison" au lieu de "HOME")
+     */
+    public String getFormattedType () {
+        if (typeCode == null) return "";
+
+        return typeCode.charAt(0) + typeCode.substring(1).toLowerCase();
+    }
+
+    /**
+     * Vérifie si l'adresse est une adresse internationale.
+     *
+     * @return true si le pays n'est pas le pays par défaut (à adapter)
+     */
+    public boolean isInternational () {
+        // À adapter selon votre pays par défaut
+        return !"FR".equalsIgnoreCase(country);
+    }
+
+    /**
+     * Clone les informations d'adresse (sans l'ID et les relations).
+     *
+     * @return un nouveau modèle avec les mêmes informations d'adresse
+     */
+    public UserAddressModel cloneAddress () {
+        UserAddressModel clone = new UserAddressModel();
+        clone.setUserId(this.userId);
+        clone.setTypeCode(this.typeCode);
+        clone.setStreet(this.street);
+        clone.setCity(this.city);
+        clone.setRegion(this.region);
+        clone.setPostalCode(this.postalCode);
+        clone.setCountry(this.country);
+        clone.setDefault(this.isDefault);
+        return clone;
     }
 
     public UUID getUserId () {

@@ -28,8 +28,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Modèle représentant un utilisateur dans le système.
+ */
 @Entity
 @Table(
         name = "users", schema = "kredika_app",
@@ -45,126 +49,343 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 public class UserModel extends BaseModel {
 
+    /**
+     * Nom complet de l'utilisateur. Doit contenir entre 2 et 100 caractères. Ce champ est obligatoire.
+     */
     @NotBlank(message = "Le nom complet est requis")
     @Size(min = 2, max = 100, message = "Le nom doit contenir entre 2 et 100 caractères")
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
+    /**
+     * Adresse email de l'utilisateur. Doit être unique et valide. Ce champ est obligatoire.
+     */
     @NotBlank(message = "L'email est requis")
     @Email(message = "L'email doit être valide")
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Pattern(regexp = "^[+]?[\\d\\s-()]+$", message = "Format de téléphone invalide")
-    @Column(name = "phone_number")
+    /**
+     * Numéro de téléphone de l'utilisateur.
+     * Doit respecter le format international.
+     */
+    @Pattern(regexp = "^\\+(?:[0-9] ?){6,14}[0-9]$", message = "Format de téléphone international invalide (ex: +33 6 12 34 56 78)")
+    @Column(name = "phone_number", unique = true)
     private String phoneNumber;
 
+    /**
+     * Date de naissance de l'utilisateur.
+     * Doit être dans le passé.
+     */
     @Past(message = "La date de naissance doit être dans le passé")
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Column(name = "national_id")
+    /**
+     * Numéro d'identification national (CNI, passeport, etc.).
+     */
+    @Size(min = 5, max = 50, message = "L'identifiant national doit contenir entre 5 et 50 caractères")
+    @Column(name = "national_id", unique = true)
     private String nationalId;
 
+    /**
+     * Profession de l'utilisateur.
+     * Limitée à 100 caractères maximum.
+     */
     @Size(max = 100, message = "La profession ne peut excéder 100 caractères")
     @Column(name = "profession")
     private String profession;
 
+    /**
+     * Revenu mensuel de l'utilisateur.
+     * Doit être positif si renseigné.
+     */
     @DecimalMin(value = "0.0", inclusive = false, message = "Le revenu mensuel doit être positif")
     @Digits(integer = 10, fraction = 2, message = "Format de revenu invalide")
     @Column(name = "monthly_income", precision = 10, scale = 2)
     private BigDecimal monthlyIncome;
 
+    /**
+     * Code du rôle principal de l'utilisateur.
+     * Par défaut à "CUSTOMER".
+     */
     @Column(name = "role_code")
     private String roleCode = "CUSTOMER";
 
+    /**
+     * Indique si le compte utilisateur est vérifié.
+     * Par défaut à false.
+     */
     @Column(name = "is_verified")
     private Boolean isVerified = false;
 
+    /**
+     * Indique si l'email a été vérifié.
+     * Par défaut à false.
+     */
     @Column(name = "email_verified")
     private Boolean emailVerified = false;
 
+    /**
+     * Indique si le téléphone a été vérifié.
+     * Par défaut à false.
+     */
     @Column(name = "phone_verified")
     private Boolean phoneVerified = false;
 
-    @Column(name = "keycloak_id")
+    /**
+     * Identifiant Keycloak pour l'authentification.
+     */
+    @Column(name = "keycloak_id", unique = true)
     private String keycloakId;
 
+    /**
+     * Statut du compte utilisateur (ACTIVE, SUSPENDED, etc.).
+     * Par défaut à "ACTIVE".
+     */
     @Column(name = "status_code")
     private String statusCode = "ACTIVE";
 
+    /**
+     * URL de l'image de profil.
+     */
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
-    @Column(name = "preferred_language")
+    /**
+     * Langue préférée de l'utilisateur.
+     * Par défaut à "fr".
+     */
+    @Column(name = "preferred_language", length = 2)
     private String preferredLanguage = "fr";
 
+    /**
+     * Date et heure de la dernière connexion.
+     */
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    /**
+     * Liste des rôles de l'utilisateur.
+     * Stockée sous forme JSON dans la base de données.
+     */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "roles", columnDefinition = "jsonb")
     private List<String> roles = new ArrayList<>();
 
+    /**
+     * Préférences utilisateur personnalisées.
+     * Stockées sous forme JSON dans la base de données.
+     */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "preferences", columnDefinition = "jsonb")
     private Object preferences;
 
-    // Relations
+    /**
+     * Commandes passées par cet utilisateur.
+     * Relation OneToMany chargée en mode LAZY.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<OrderModel> orders = new ArrayList<>();
 
+    /**
+     * Profil de crédit associé à cet utilisateur.
+     * Relation OneToOne chargée en mode LAZY.
+     */
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private CreditProfileModel creditProfile;
 
+    /**
+     * Adresses de cet utilisateur.
+     * Relation OneToMany chargée en mode LAZY.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<UserAddressModel> addresses = new ArrayList<>();
 
+    /**
+     * Paniers de cet utilisateur.
+     * Relation OneToMany chargée en mode LAZY.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<CartModel> carts = new ArrayList<>();
 
+    /**
+     * Plans de paiement associés à cet utilisateur.
+     * Relation OneToMany chargée en mode LAZY.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<InstallmentPlanModel> installmentPlans = new ArrayList<>();
 
+    /**
+     * Transactions de paiement de cet utilisateur.
+     * Relation OneToMany chargée en mode LAZY.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<PaymentTransactionModel> paymentTransactions = new ArrayList<>();
 
+    /**
+     * Sessions de cet utilisateur.
+     * Relation OneToMany chargée en mode LAZY.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<UserSessionModel> userSessions = new ArrayList<>();
 
+    /**
+     * Notifications reçues par cet utilisateur.
+     * Relation OneToMany chargée en mode LAZY.
+     */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<NotificationModel> notifications = new ArrayList<>();
 
-    // Méthodes utilitaires
+    /**
+     * Calcule l'âge de l'utilisateur en années.
+     * @return l'âge en années ou null si la date de naissance n'est pas renseignée
+     */
     public Integer getAge () {
-        if (dateOfBirth != null) {
-            return Period.between(dateOfBirth, LocalDate.now()).getYears();
-        }
-        return null;
+        if (dateOfBirth == null) return null;
+        return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
 
+    /**
+     * Vérifie si l'utilisateur est majeur.
+     *
+     * @return true si l'utilisateur a 18 ans ou plus, false sinon
+     */
+    public Boolean isAdult () {
+        Integer age = getAge();
+        return age != null && age >= 18;
+    }
+
+    /**
+     * Vérifie si l'utilisateur est complètement vérifié (email et téléphone).
+     * @return true si l'utilisateur est vérifié, false sinon
+     */
     public Boolean isFullyVerified () {
         return Boolean.TRUE.equals(emailVerified) && Boolean.TRUE.equals(phoneVerified);
     }
 
+    /**
+     * Récupère l'adresse par défaut de l'utilisateur.
+     * @return l'adresse par défaut ou null si aucune n'est définie
+     */
     public UserAddressModel getDefaultAddress () {
+        if (addresses == null) return null;
         return addresses.stream()
                 .filter(addr -> Boolean.TRUE.equals(addr.getDefault()))
                 .findFirst()
                 .orElse(null);
     }
 
+    /**
+     * Génère un nom d'affichage pour l'utilisateur.
+     * @return le nom complet si disponible, sinon la partie avant @ de l'email
+     */
     public String getDisplayName () {
-        return fullName != null ? fullName : email.split("@")[0];
+        if (fullName != null && !fullName.trim().isEmpty()) {
+            return fullName;
+        }
+        return email != null ? email.split("@")[0] : "";
     }
+
+    /**
+     * Vérifie si l'utilisateur a un rôle spécifique.
+     *
+     * @param role le rôle à vérifier
+     * @return true si l'utilisateur a le rôle, false sinon
+     */
+    public boolean hasRole (String role) {
+        return roles != null && roles.contains(role);
+    }
+
+    /**
+     * Ajoute un rôle à l'utilisateur.
+     *
+     * @param role le rôle à ajouter
+     */
+    public void addRole (String role) {
+        if (role != null && !role.trim().isEmpty()) {
+            if (roles == null) {
+                roles = new ArrayList<>();
+            }
+            if (!roles.contains(role)) {
+                roles.add(role);
+            }
+        }
+    }
+
+    /**
+     * Met à jour la date de dernière connexion.
+     */
+    public void updateLastLogin () {
+        this.lastLoginAt = LocalDateTime.now();
+    }
+
+    /**
+     * Vérifie si le compte utilisateur est actif.
+     *
+     * @return true si le statut est ACTIVE, false sinon
+     */
+    public boolean isActive () {
+        return "ACTIVE".equalsIgnoreCase(statusCode);
+    }
+
+    /**
+     * Vérifie si l'utilisateur a un profil de crédit.
+     *
+     * @return true si un profil de crédit existe, false sinon
+     */
+    public boolean hasCreditProfile () {
+        return creditProfile != null;
+    }
+
+    /**
+     * Récupère le panier actif de l'utilisateur.
+     *
+     * @return le panier actif ou null si aucun n'est trouvé
+     */
+    public CartModel getActiveCart () {
+        if (carts == null) return null;
+        return carts.stream()
+                .filter(cart -> "ACTIVE".equals(cart.getStatusCode()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Génère les initiales de l'utilisateur.
+     *
+     * @return les initiales (ex: "JD" pour "John Doe")
+     */
+    public String getInitials () {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            return "";
+        }
+        String[] names = fullName.split(" ");
+        if (names.length == 0) return "";
+        if (names.length == 1) return names[0].substring(0, 1).toUpperCase();
+        return (names[0].charAt(0) + names[names.length - 1].substring(0, 1)).toUpperCase();
+    }
+
+    /**
+     * Vérifie si l'utilisateur a une adresse email en domaine professionnel.
+     *
+     * @return true si l'email est professionnel, false sinon
+     */
+    public boolean hasProfessionalEmail () {
+        if (email == null) return false;
+        String[] domains = {"gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "live.com"};
+        String domain = email.split("@")[1].toLowerCase();
+        return Arrays.stream(domains).noneMatch(d -> d.equalsIgnoreCase(domain));
+    }
+
 
     public @NotBlank(message = "Le nom complet est requis") @Size(min = 2, max = 100, message = "Le nom doit contenir entre 2 et 100 caractères") String getFullName () {
         return fullName;

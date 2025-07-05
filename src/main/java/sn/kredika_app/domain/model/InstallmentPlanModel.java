@@ -9,7 +9,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
@@ -20,72 +30,166 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+
+/**
+ * Représente un plan de paiement échelonné pour un achat à crédit. Contient tous les détails du crédit et le calendrier
+ * de remboursement.
+ */
 @Entity
 @Table(name = "installment_plans", schema = "kredika_app")
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class InstallmentPlanModel extends BaseModel {
 
-    @Column(name = "plan_number")
+    /**
+     * Numéro unique identifiant le plan de paiement Format: "PLAN-YYYYMMDD-XXXXX"
+     */
+    @Pattern(regexp = "^PLAN-\\d{8}-\\d{5}$", message = "Le format du numéro de plan est invalide")
+    @Column(name = "plan_number", unique = true, length = 20)
     private String planNumber;
 
-    @Column(name = "user_id")
+    /**
+     * Identifiant de l'utilisateur bénéficiaire du crédit
+     */
+    @NotNull(message = "L'identifiant utilisateur est obligatoire")
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 
+    /**
+     * Identifiant de la commande associée
+     */
     @Column(name = "order_id")
     private UUID orderId;
 
+    /**
+     * Identifiant du produit financé (si applicable)
+     */
     @Column(name = "product_id")
     private UUID productId;
 
-    @NotNull(message = "Principal amount is required")
+    /**
+     * Montant principal du crédit (hors commissions)
+     * Doit être strictement positif
+     */
+    @NotNull(message = "Le montant principal est obligatoire")
+    @DecimalMin(value = "0.01", message = "Le montant principal doit être positif")
+    @Digits(integer = 10, fraction = 2, message = "Format invalide (10 chiffres avant, 2 après la virgule)")
     @Column(name = "principal_amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal principalAmount;
 
-    @NotNull(message = "Commission rate is required")
+    /**
+     * Taux de commission appliqué (entre 0 et 1)
+     * Ex: 0.05 pour 5% de commission
+     */
+    @NotNull(message = "Le taux de commission est obligatoire")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Le taux doit être strictement positif")
+    @DecimalMax(value = "1.0", message = "Le taux ne peut dépasser 100%")
+    @Digits(integer = 1, fraction = 4, message = "Format invalide (max 4 décimales)")
     @Column(name = "commission_rate", precision = 5, scale = 4, nullable = false)
     private BigDecimal commissionRate;
 
-    @NotNull(message = "Commission amount is required")
+    /**
+     * Montant total des commissions
+     * Calculé automatiquement: principalAmount * commissionRate
+     */
+    @NotNull(message = "Le montant de commission est obligatoire")
+    @DecimalMin(value = "0.0", message = "Le montant de commission ne peut être négatif")
+    @Digits(integer = 10, fraction = 2, message = "Format invalide (10 chiffres avant, 2 après la virgule)")
     @Column(name = "commission_amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal commissionAmount;
 
-    @NotNull(message = "Total amount is required")
+    /**
+     * Montant total à rembourser (principal + commissions)
+     * Calculé automatiquement: principalAmount + commissionAmount
+     */
+    @NotNull(message = "Le montant total est obligatoire")
+    @DecimalMin(value = "0.01", message = "Le montant total doit être positif")
+    @Digits(integer = 10, fraction = 2, message = "Format invalide (10 chiffres avant, 2 après la virgule)")
     @Column(name = "total_amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
-    @NotNull(message = "Installment amount is required")
+    /**
+     * Montant de chaque échéance
+     * Calculé automatiquement: totalAmount / nombre d'échéances
+     */
+    @NotNull(message = "Le montant de l'échéance est obligatoire")
+    @DecimalMin(value = "0.01", message = "Le montant de l'échéance doit être positif")
+    @Digits(integer = 10, fraction = 2, message = "Format invalide (10 chiffres avant, 2 après la virgule)")
     @Column(name = "installment_amount", precision = 10, scale = 2, nullable = false)
     private BigDecimal installmentAmount;
 
+    /**
+     * Durée totale du crédit en mois (1 à 36)
+     */
+    @Min(value = 1, message = "La durée minimale est de 1 mois")
+    @Max(value = 36, message = "La durée maximale est de 36 mois")
     @Column(name = "duration_months")
     private Integer durationMonths;
 
-    @Column(name = "frequency_code")
+    /**
+     * Fréquence de paiement (MENSUEL, TRIMESTRIEL, etc.)
+     * Doit correspondre à un code existant dans le système
+     */
+    @Size(max = 20, message = "Le code de fréquence ne peut excéder 20 caractères")
+    @Column(name = "frequency_code", length = 20)
     private String frequencyCode;
 
+    /**
+     * Nombre total d'échéances
+     */
+    @Min(value = 1, message = "Il doit y avoir au moins une échéance")
     @Column(name = "total_installments")
     private Integer totalInstallments;
 
+    /**
+     * Nombre d'échéances déjà payées
+     */
+    @Min(value = 0, message = "Le nombre d'échéances payées ne peut être négatif")
     @Column(name = "paid_installments")
-    private Integer paidInstallments;
+    private Integer paidInstallments = 0;
 
+    /**
+     * Date de début du plan de paiement
+     * Doit être dans le futur ou aujourd'hui
+     */
+    @FutureOrPresent(message = "La date de début doit être aujourd'hui ou dans le futur")
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    /**
+     * Date de fin théorique du plan
+     * Calculée automatiquement: startDate + durationMonths
+     */
+    @Future(message = "La date de fin doit être dans le futur")
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @Column(name = "status_code")
+    /**
+     * Statut courant du plan (ACTIF, EN_RETARD, TERMINE, etc.)
+     * Doit correspondre à un code existant dans le système
+     */
+    @Size(max = 20, message = "Le code statut ne peut excéder 20 caractères")
+    @Column(name = "status_code", length = 20)
     private String statusCode;
 
+    /**
+     * Montant des pénalités pour retard de paiement
+     * Valeur par défaut: 0
+     */
+    @DecimalMin(value = "0.0", message = "Le montant des pénalités ne peut être négatif")
+    @Digits(integer = 10, fraction = 2, message = "Format invalide (10 chiffres avant, 2 après la virgule)")
     @Column(name = "late_penalty", precision = 10, scale = 2)
     private BigDecimal latePenalty = BigDecimal.ZERO;
 
+    /**
+     * Date effective de complétion du plan
+     * Null si le plan est encore en cours
+     */
+    @PastOrPresent(message = "La date de complétion doit être dans le passé ou aujourd'hui")
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    // Relations
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     @JsonIgnore
@@ -101,13 +205,43 @@ public class InstallmentPlanModel extends BaseModel {
     @JsonIgnore
     private ProductModel product;
 
-    @OneToMany(mappedBy = "installmentPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "installmentPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
     private List<PaymentScheduleModel> paymentSchedules = new ArrayList<>();
 
-    @OneToMany(mappedBy = "installmentPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "installmentPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore
     private List<PaymentTransactionModel> paymentTransactions = new ArrayList<>();
+
+    /**
+     * Calcule le montant restant à payer
+     *
+     * @return totalAmount - (installmentAmount * paidInstallments)
+     */
+    public BigDecimal getRemainingAmount () {
+        return totalAmount.subtract(
+                installmentAmount.multiply(BigDecimal.valueOf(paidInstallments))
+        );
+    }
+
+    /**
+     * Vérifie si le plan est complètement payé
+     *
+     * @return true si paidInstallments >= totalInstallments, false sinon
+     */
+    public boolean isFullyPaid () {
+        return paidInstallments >= totalInstallments;
+    }
+
+    /**
+     * Vérifie si le plan est en retard de paiement
+     *
+     * @return true si la date actuelle est après endDate et pas complètement payé
+     */
+    public boolean isLate () {
+        return !isFullyPaid() && LocalDate.now().isAfter(endDate);
+    }
+
 
     public String getPlanNumber () {
         return planNumber;
