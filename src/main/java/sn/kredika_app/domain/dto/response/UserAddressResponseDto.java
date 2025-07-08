@@ -26,10 +26,9 @@ public class UserAddressResponseDto {
     private Boolean isDefault;
     private String fullAddress;
 
-    private Double latitude;  // Nouveau
-    private Double longitude; // Nouveau
+    private Double latitude;
+    private Double longitude;
 
-    // Champ calculé
     public String getFullAddress () {
         return String.format("%s, %s, %s %s", street, city, postalCode, country);
     }

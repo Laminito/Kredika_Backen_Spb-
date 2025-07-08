@@ -1,4 +1,4 @@
-package sn.kredika_app.domain.dto.response;
+package sn.kredika_app.domain.dto.request.land;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -8,7 +8,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,10 +17,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CartResponseDto {
-    private UUID id;
-    private String statusCode;
-    private BigDecimal totalAmount;
-    private List<CartItemResponseDto> items;
-    private LocalDateTime expiresAt;
+public class LandRequestDto {
+    private String location;
+    private String landType; // TF, bail, délibération
+    private UUID ownerId;
+    private BigDecimal latitude;
+    private BigDecimal longitude;
+    private List<LandDocumentRequestDto> documents;
 }
